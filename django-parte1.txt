@@ -1,0 +1,159 @@
+mkdir "nome da pasta"
+cd "nome da pasta"
+python -m venv .venv
+.\.venv\Scripts\activate
+
+(Se activate não funcionar, tente: Set-ExecutionPolicy RemoteSigned -Scope Process)
+
+Ambiente virtual criando e agora Django
+
+pip install django
+django-admin startproject setup .
+python manage.py runserver
+
+
+--- 
+setup > settings.py
+
+language_code = 'pt-br'
+
+Time_zone = 'America/Sao_Paulo'
+
+------
+
+criando app
+
+python manage.py startapp todos
+
+--
+
+instalando a app no projeto:
+
+setup > settings encontre INSTALLED_APPS e add de acordo:
+
+'todos.apps.TodosConfig'
+
+---
+
+Agora podemos trabalhar no app
+
+em Views.py add:
+
+from django.http import HttpResponse
+
+def home(request):
+  return HttpResponse("Olá Mundo!!") (pode por como h1 tbm)
+
+------
+
+precisamos explicar como esse response vai ser chamado:
+
+setup > urls add:
+
+from todos.views import home
+
+path('', home),
+
+-------------------
+
+em todos, criar pasta templates, home.html
+
+<h1>Olá mundo!!!</h1>
+
+depois em todo > views:
+
+alterar o return para:
+
+return render(request, "todos/home.html")
+
+--------------
+
+todolist:
+
+todo > models.py=
+
+class Todo(models.Model):
+	title = models.CharField(max_length=100, null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+	deadline = models.DateTimeField(null=False, blank=False)
+	finished_at = models.DateTimeField(null=True)
+
+---------------
+
+python manage.py migrate
+
+python manage.py makemigrations
+
+python manage.py migrate
+
+--------------------------------------
+
+Configurações interessantes é esconder a chave secreta e outras informações, para que não fiquem visíveis no código, boas práticas, isolar informações
+
+pip install python-decouple
+
+criar arquivo '.env' dentro da parte inicial do projeto
+copiar 'SECRET_KEY='123209184hd' dentro de settings.py e jogar nesse arquivo '.env' criado
+
+em settings.py:
+
+from decouple import config
+
+SECRET_KEY = config("SECRET_KEY") #Mesmo nome que está no arquivo .env
+
+Importante esse arquivo .env estar no .gitignore para que esse arquivo esteja externalizado 
+e seja ignorado pela ferramenta de versionamento de código
+
+DEBUG = config("DEBUG", cast=bool, default=False) # e jogar 'DEBUG = True' em .env
+
+ALLOWED_HOSTS=* #dentro de .env e * significa que permito que qualquer host faça requisição em ambiente de desenvolvimento
+
+from decouple import config, Csv #permite que o separado de virgulas entenda como formato de listas
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
+
+Podemos esconder também DATABASES, que no momento não importa muito mas mais para frente terá informações de onde estão os bancos de dados e senhas de acesso, por isso também é interessante esconder essas informações.
+
+Geralmente quando a gente coloca essas config de banco em variáveis de ambiente usamos um padrão de string de conexão que não é um padrão suportado pelo django. Então temos que converter esse padrão de string de conexão para um que o Django utiliza.
+
+pip install dj-database-url
+
+#importar
+from dj_database_url import parse as db_url
+
+DATABASES
+	'default': config("DATABASE_URL", default=f'sqlite:///{BASE_DIR / "db.sqlite3"}', cast=db_url,)
+
+Não colocar no .env pq é o que vamos utilizar como Default
+
+python manage.py runserver #para testar se tudo certinho
+
+apagar banco de dados db.sqlite3 e 
+
+python manage.py migrate #para testar se tudo certinho
+
+Agora nossas configurações estão isoladas
+
+-----------------------------------------------------
+
+uma biblioteca que ajuda a padronizar a formatação python
+
+pip install black
+
+black . #para executar
+
+O ideal é configurar para que isso seja automatizado
+
+CTRL + SHIFT + P > settings e selecionar workspace settings.json
+essas são configurações para este projeto
+
+"formatonsave" q é 
+"editor.formatOnSave": True,
+
+"forprove" q é
+"python.formatting.provider": "black",
+
+defaform q é
+"editor.defaultFormatter": "ms-python.black-formatter" #caso você tenha mais de uma forma de formatar seu código vs code instalado
+
+NÃO CONSEGUIR FAZER FUNCIONAR ^^^^^^
+----------------------------------------------------------------
